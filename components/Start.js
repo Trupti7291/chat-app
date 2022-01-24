@@ -70,7 +70,7 @@ export default class Start extends React.Component {
                                 {/* Independence background */}
                                 <TouchableOpacity
                                     accessible={true}
-                                    accessibilityLabel="Select purple background"
+                                    accessibilityLabel="Select independence background"
                                     accessibilityHint="Choose independence background for the chat screen"
                                     accessibilityRole="button"
                                     onPress={() => this.changeBgColor(this.colors.independence)}
