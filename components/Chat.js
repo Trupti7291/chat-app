@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, StyleSheet, Platform, KeyboardAvoidingView } from 'react-native';
 import { GiftedChat, Bubble, SystemMessage } from 'react-native-gifted-chat';
-import firebase from 'firebase';
-import firestore from 'firebase';
+// import firebase from 'firebase';
+// import firestore from 'firebase';
 
-// const firebase = require('firebase');
-// require('firebase/firestore');
+const firebase = require('firebase');
+require('firebase/firestore');
 
 // web app's Firebase configuration
 const firebaseConfig = {
@@ -30,7 +30,8 @@ export default class Chat extends React.Component {
                 name: '',
                 avatar: '',
             }
-        }
+        };
+
         //initializing firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
@@ -59,7 +60,7 @@ export default class Chat extends React.Component {
         });
 
         this.setState({
-            messages,
+            messages: messages
         });
     };
 
@@ -92,6 +93,12 @@ export default class Chat extends React.Component {
         });
     }
 
+    componentWillUnmount() {
+        // stop listening to authentication
+        this.authUnsubscribe();
+        // stop listening for changes
+        this.unsubscribe();
+    }
 
     addMessage() {
         const message = this.state.messages[0];
@@ -112,20 +119,13 @@ export default class Chat extends React.Component {
         });
     }
 
-    componentWillUnmount() {
-        // stop listening to authentication
-        this.authUnsubscribe();
-        // stop listening for changes
-        this.unsubscribe();
-    }
-
     renderBubble(props) {
         return (
             <Bubble
                 {...props}
                 wrapperStyle={{
                     right: {
-                        backgroundColor: 'purple'
+                        backgroundColor: 'dbb35a'
                     }
                 }}
             />
@@ -152,11 +152,16 @@ export default class Chat extends React.Component {
                     }}
                 >
                     <GiftedChat
+                        style={styles.giftedChat}
                         renderBubble={this.renderBubble.bind(this)}
+                        renderSystemMessage={this.renderSystemMessage}
                         messages={this.state.messages}
                         onSend={messages => this.onSend(messages)}
                         user={{
-                            _id: 1,
+                            _id: this.state.user._id,
+                            name: this.state.name,
+                            avatar: this.state.user.avatar,
+
                         }}
                     />
                     {Platform.OS === 'ios' ? <KeyboardAvoidingView behavior="height" /> : null
