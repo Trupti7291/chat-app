@@ -7,29 +7,28 @@ import { GiftedChat, Bubble, SystemMessage } from 'react-native-gifted-chat';
 const firebase = require('firebase');
 require('firebase/firestore');
 
-// web app's Firebase configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyATwzXvTaRhh8Btvik1_emhOpOAWY8lbw8",
-    authDomain: "chat-app-c9e34.firebaseapp.com",
-    projectId: "chat-app-c9e34",
-    storageBucket: "chat-app-c9e34.appspot.com",
-    messagingSenderId: "189988602389",
-    appId: "1:189988602389:web:f796804b979bff1b07441c",
-    measurementId: "G-L9RNWLHC4W"
-};
-
-
 export default class Chat extends React.Component {
     constructor() {
         super();
         this.state = {
             messages: [],
-            uid: 0,
+            uid: 1,
             user: {
-                _id: '',
+                _id: 1,
                 name: '',
                 avatar: '',
             }
+        };
+
+        // web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyATwzXvTaRhh8Btvik1_emhOpOAWY8lbw8",
+            authDomain: "chat-app-c9e34.firebaseapp.com",
+            projectId: "chat-app-c9e34",
+            storageBucket: "chat-app-c9e34.appspot.com",
+            messagingSenderId: "189988602389",
+            appId: "1:189988602389:web:f796804b979bff1b07441c",
+            measurementId: "G-L9RNWLHC4W"
         };
 
         //initializing firebase
@@ -69,6 +68,12 @@ export default class Chat extends React.Component {
         let { name } = this.props.route.params;
         this.props.navigation.setOptions({ title: name });
 
+        // listens for updates in the collection
+        this.unsubscribe = this.referenceChatMessages
+            .orderBy("createdAt", "desc")
+            .onSnapshot(this.onCollectionUpdate);
+
+
         // listen to authentication events
         this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
             if (!user) {
@@ -85,12 +90,15 @@ export default class Chat extends React.Component {
                     avatar: 'https://placeimg.com/140/140/any',
                 },
             });
-
-            // listens for updates in the collection
-            this.unsubscribe = this.referenceChatMessages
-                .orderBy("createdAt", "desc")
-                .onSnapshot(this.onCollectionUpdate);
         });
+
+        // system message when user enters chat room
+        const SystemMessage = {
+            _id: `sys-${Math.floor(Math.random() * 100000)}`,
+            text: `${name} has entered Chatter`,
+            createdAt: new Date(),
+            system: true
+        }
     }
 
     componentWillUnmount() {
@@ -111,9 +119,9 @@ export default class Chat extends React.Component {
         });
     }
     // calback function for when user sends a message
-    onSend(messages = []) {
+    onSend(newMessages = []) {
         this.setState(previousState => ({
-            messages: GiftedChat.append(previousState.messages, messages),
+            messages: GiftedChat.append(previousState.messages, newMessages),
         }), () => {
             this.addMessage();
         });
