@@ -55,7 +55,6 @@ export default class Chat extends React.Component {
             this.setState({
                 uid: user.uid,
                 messages: [],
-                text: 'Hello developer',
                 user: {
                     _id: user.uid,
                     name: name,
