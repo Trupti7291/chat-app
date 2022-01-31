@@ -12,32 +12,62 @@ export default class Chat extends React.Component {
         super();
         this.state = {
             messages: [],
-            uid: 1,
+            uid: 0,
             user: {
-                _id: 1,
+                _id: '',
                 name: '',
                 avatar: '',
             }
         };
 
-        // web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyATwzXvTaRhh8Btvik1_emhOpOAWY8lbw8",
-            authDomain: "chat-app-c9e34.firebaseapp.com",
-            projectId: "chat-app-c9e34",
-            storageBucket: "chat-app-c9e34.appspot.com",
-            messagingSenderId: "189988602389",
-            appId: "1:189988602389:web:f796804b979bff1b07441c",
-            measurementId: "G-L9RNWLHC4W"
-        };
-
         //initializing firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
+
+            // web app's Firebase configuration
+            const firebaseConfig = {
+                apiKey: "AIzaSyATwzXvTaRhh8Btvik1_emhOpOAWY8lbw8",
+                authDomain: "chat-app-c9e34.firebaseapp.com",
+                projectId: "chat-app-c9e34",
+                storageBucket: "chat-app-c9e34.appspot.com",
+                messagingSenderId: "189988602389",
+                appId: "1:189988602389:web:f796804b979bff1b07441c",
+                measurementId: "G-L9RNWLHC4W"
+            };
         }
 
         // reference to the Firestore messages collection
         this.referenceChatMessages = firebase.firestore().collection("messages");
+    }
+
+    componentDidMount() {
+        // get username prop from Start.js
+        let { name } = this.props.route.params;
+        this.props.navigation.setOptions({ title: name });
+
+        // listen to authentication events
+        this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
+            if (!user) {
+                firebase.auth().signInAnonymously();
+            }
+
+            // update user state with currently active data
+            this.setState({
+                uid: user.uid,
+                messages: [],
+                text: 'Hello developer',
+                user: {
+                    _id: user.uid,
+                    name: name,
+                    avatar: 'https://placeimg.com/140/140/any',
+                },
+            });
+
+            // listens for updates in the collection
+            this.unsubscribe = this.referenceChatMessages
+                .orderBy("createdAt", "desc")
+                .onSnapshot(this.onCollectionUpdate);
+        });
     }
 
     onCollectionUpdate = (querySnapshot) => {
@@ -59,47 +89,9 @@ export default class Chat extends React.Component {
         });
 
         this.setState({
-            messages: messages
+            messages: messages,
         });
     };
-
-    componentDidMount() {
-        // get username prop from Start.js
-        let { name } = this.props.route.params;
-        this.props.navigation.setOptions({ title: name });
-
-        // listens for updates in the collection
-        this.unsubscribe = this.referenceChatMessages
-            .orderBy("createdAt", "desc")
-            .onSnapshot(this.onCollectionUpdate);
-
-
-        // listen to authentication events
-        this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
-            if (!user) {
-                firebase.auth().signInAnonymously();
-            }
-
-            // update user state with currently active data
-            this.setState({
-                uid: user.uid,
-                messages: [],
-                user: {
-                    _id: user.uid,
-                    name: name,
-                    avatar: 'https://placeimg.com/140/140/any',
-                },
-            });
-        });
-
-        // system message when user enters chat room
-        const SystemMessage = {
-            _id: `sys-${Math.floor(Math.random() * 100000)}`,
-            text: `${name} has entered Chatter`,
-            createdAt: new Date(),
-            system: true
-        }
-    }
 
     componentWillUnmount() {
         // stop listening to authentication
@@ -119,9 +111,9 @@ export default class Chat extends React.Component {
         });
     }
     // calback function for when user sends a message
-    onSend(newMessages = []) {
+    onSend(messages = []) {
         this.setState(previousState => ({
-            messages: GiftedChat.append(previousState.messages, newMessages),
+            messages: GiftedChat.append(previousState.messages, messages),
         }), () => {
             this.addMessage();
         });
@@ -133,16 +125,19 @@ export default class Chat extends React.Component {
                 {...props}
                 wrapperStyle={{
                     right: {
-                        backgroundColor: 'dbb35a'
-                    }
+                        backgroundColor: '#dbb35a',
+                    },
+                    left: {
+                        backgroundColor: 'white',
+                    },
                 }}
             />
-        )
+        );
     }
 
-    renderSystemMessage(props) {
-        return <SystemMessage {...props} textStyle={{ color: '#736357' }} />;
-    }
+    //    renderSystemMessage(props) {
+    //        return <SystemMessage {...props} textStyle={{ color: '#736357' }} />;
+    //    }
 
     render() {
         let name = this.props.route.params.name;
@@ -162,7 +157,7 @@ export default class Chat extends React.Component {
                     <GiftedChat
                         style={styles.giftedChat}
                         renderBubble={this.renderBubble.bind(this)}
-                        renderSystemMessage={this.renderSystemMessage}
+                        //                        renderSystemMessage={this.renderSystemMessage}
                         messages={this.state.messages}
                         onSend={messages => this.onSend(messages)}
                         user={{
