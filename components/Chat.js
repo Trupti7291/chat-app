@@ -7,6 +7,17 @@ import { GiftedChat, Bubble, SystemMessage } from 'react-native-gifted-chat';
 const firebase = require('firebase');
 require('firebase/firestore');
 
+// web app's Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyATwzXvTaRhh8Btvik1_emhOpOAWY8lbw8",
+    authDomain: "chat-app-c9e34.firebaseapp.com",
+    projectId: "chat-app-c9e34",
+    storageBucket: "chat-app-c9e34.appspot.com",
+    messagingSenderId: "189988602389",
+    appId: "1:189988602389:web:f796804b979bff1b07441c",
+    measurementId: "G-L9RNWLHC4W"
+};
+
 export default class Chat extends React.Component {
     constructor() {
         super();
@@ -23,22 +34,35 @@ export default class Chat extends React.Component {
         //initializing firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
-
-            // web app's Firebase configuration
-            const firebaseConfig = {
-                apiKey: "AIzaSyATwzXvTaRhh8Btvik1_emhOpOAWY8lbw8",
-                authDomain: "chat-app-c9e34.firebaseapp.com",
-                projectId: "chat-app-c9e34",
-                storageBucket: "chat-app-c9e34.appspot.com",
-                messagingSenderId: "189988602389",
-                appId: "1:189988602389:web:f796804b979bff1b07441c",
-                measurementId: "G-L9RNWLHC4W"
-            };
         }
 
         // reference to the Firestore messages collection
-        this.referenceChatMessages = firebase.firestore().collection("messages");
+        this.referenceChatMessages = firebase.firestore().collection('messages');
+        this.refMsgsUser = null;
     }
+
+    onCollectionUpdate = (querySnapshot) => {
+        const messages = [];
+        // go through each document
+        querySnapshot.forEach((doc) => {
+            // get the QueryDocumentSnapshot's data
+            var data = doc.data();
+            messages.push({
+                _id: data._id,
+                text: data.text,
+                createdAt: data.createdAt.toDate(),
+                user: {
+                    _id: data.user._id,
+                    name: data.user.name,
+                    avatar: data.user.avatar,
+                },
+            });
+        });
+
+        this.setState({
+            messages: messages,
+        });
+    };
 
     componentDidMount() {
         // get username prop from Start.js
@@ -66,31 +90,14 @@ export default class Chat extends React.Component {
             this.unsubscribe = this.referenceChatMessages
                 .orderBy("createdAt", "desc")
                 .onSnapshot(this.onCollectionUpdate);
+
+            //referencing messages of current user
+            this.refMsgsUser = firebase
+                .firestore()
+                .collection('messages')
+                .where('uid', '==', this.state.uid);
         });
     }
-
-    onCollectionUpdate = (querySnapshot) => {
-        const messages = [];
-        // go through each document
-        querySnapshot.forEach((doc) => {
-            // get the QueryDocumentSnapshot's data
-            var data = doc.data();
-            messages.push({
-                _id: data._id,
-                text: data.text,
-                createdAt: data.createdAt.toDate(),
-                user: {
-                    _id: data.user._id,
-                    name: data.user.name,
-                    avatar: data.user.avatar,
-                },
-            });
-        });
-
-        this.setState({
-            messages: messages,
-        });
-    };
 
     componentWillUnmount() {
         // stop listening to authentication
@@ -134,9 +141,9 @@ export default class Chat extends React.Component {
         );
     }
 
-    //    renderSystemMessage(props) {
-    //        return <SystemMessage {...props} textStyle={{ color: '#736357' }} />;
-    //    }
+    renderSystemMessage(props) {
+        return <SystemMessage {...props} textStyle={{ color: '#736357' }} />;
+    }
 
     render() {
         let name = this.props.route.params.name;
@@ -156,7 +163,7 @@ export default class Chat extends React.Component {
                     <GiftedChat
                         style={styles.giftedChat}
                         renderBubble={this.renderBubble.bind(this)}
-                        //                        renderSystemMessage={this.renderSystemMessage}
+                        renderSystemMessage={this.renderSystemMessage}
                         messages={this.state.messages}
                         onSend={messages => this.onSend(messages)}
                         user={{
