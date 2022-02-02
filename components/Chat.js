@@ -30,7 +30,8 @@ export default class Chat extends React.Component {
                 _id: '',
                 name: '',
                 avatar: '',
-            }
+            },
+            isConnected: false,
         };
 
         //initializing firebase
@@ -109,41 +110,46 @@ export default class Chat extends React.Component {
         NetInfo.fetch().then(connection => {
             if (connection.isConnected) {
                 console.log('online');
+
+                // listen to authentication events
+                this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
+                    if (!user) {
+                        firebase.auth().signInAnonymously();
+                    }
+
+                    // update user state with currently active data
+                    this.setState({
+                        uid: user.uid,
+                        messages: [],
+                        user: {
+                            _id: user.uid,
+                            name: name,
+                            avatar: 'https://placeimg.com/140/140/any',
+                        },
+                    });
+
+                    // listens for updates in the collection
+                    this.unsubscribe = this.referenceChatMessages
+                        .orderBy("createdAt", "desc")
+                        .onSnapshot(this.onCollectionUpdate);
+
+                    //referencing messages of current user
+                    this.refMsgsUser = firebase
+                        .firestore()
+                        .collection('messages')
+                        .where('uid', '==', this.state.uid);
+                });
+
+                // save messages locally to AsyncStorage
+                this.saveMessages();
+
             } else {
+                this.setState({ isConnected: false });
                 console.log('offline');
+                this.getMessages();
             }
         });
 
-        // listen to authentication events
-        this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
-            if (!user) {
-                firebase.auth().signInAnonymously();
-            }
-
-            // update user state with currently active data
-            this.setState({
-                uid: user.uid,
-                messages: [],
-                user: {
-                    _id: user.uid,
-                    name: name,
-                    avatar: 'https://placeimg.com/140/140/any',
-                },
-            });
-
-            this.getMessages();
-
-            // listens for updates in the collection
-            this.unsubscribe = this.referenceChatMessages
-                .orderBy("createdAt", "desc")
-                .onSnapshot(this.onCollectionUpdate);
-
-            //referencing messages of current user
-            this.refMsgsUser = firebase
-                .firestore()
-                .collection('messages')
-                .where('uid', '==', this.state.uid);
-        });
     }
 
     componentWillUnmount() {
@@ -223,6 +229,7 @@ export default class Chat extends React.Component {
                         style={styles.giftedChat}
                         renderBubble={this.renderBubble.bind(this)}
                         renderSystemMessage={this.renderSystemMessage}
+                        renderInputToolbar={this.renderInputToolbar.bind(this)}
                         messages={this.state.messages}
                         onSend={messages => this.onSend(messages)}
                         user={{
