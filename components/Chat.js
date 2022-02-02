@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, StyleSheet, Platform, KeyboardAvoidingView } from 'react-native';
-import { GiftedChat, Bubble, SystemMessage } from 'react-native-gifted-chat';
+import { GiftedChat, Bubble, SystemMessage, InputToolbar } from 'react-native-gifted-chat';
 import AsyncStorage from '@react-native-community/async-storage';
+import NetInfo from '@react-native-community/netinfo';
 
 // import firebase from 'firebase';
 // import firestore from 'firebase';
@@ -65,10 +66,53 @@ export default class Chat extends React.Component {
         });
     };
 
+    // get messages from AsyncStorage
+    async getMessages() {
+        let messages = '';
+        try {
+            messages = await AsyncStorage.getItem('messages') || [];
+            this.setState({
+                messages: JSON.parse(messages)
+            });
+        } catch (error) {
+            console.log(error.message);
+        }
+    };
+
+    // save messages on the asyncStorage
+    async saveMessages() {
+        try {
+            await AsyncStorage.setItem('messages', JSON.stringify(this.state.messages));
+        } catch (error) {
+            console.log(error.message);
+        }
+    }
+
+    // delete message from asyncStorage
+    async deleteMessages() {
+        try {
+            await AsyncStorage.removeItem('messages');
+            this.setState({
+                messages: []
+            })
+        } catch (error) {
+            console.log(error.message);
+        }
+    }
+
     componentDidMount() {
         // get username prop from Start.js
         let { name } = this.props.route.params;
         this.props.navigation.setOptions({ title: name });
+
+        // tell you if you should fetch data from asyncStorage or Firestore.
+        NetInfo.fetch().then(connection => {
+            if (connection.isConnected) {
+                console.log('online');
+            } else {
+                console.log('offline');
+            }
+        });
 
         // listen to authentication events
         this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
@@ -86,6 +130,8 @@ export default class Chat extends React.Component {
                     avatar: 'https://placeimg.com/140/140/any',
                 },
             });
+
+            this.getMessages();
 
             // listens for updates in the collection
             this.unsubscribe = this.referenceChatMessages
@@ -123,6 +169,7 @@ export default class Chat extends React.Component {
             messages: GiftedChat.append(previousState.messages, messages),
         }), () => {
             this.addMessage();
+            this.saveMessages();
         });
     }
 
@@ -144,6 +191,17 @@ export default class Chat extends React.Component {
 
     renderSystemMessage(props) {
         return <SystemMessage {...props} textStyle={{ color: '#736357' }} />;
+    }
+
+    renderInputToolbar(props) {
+        if (this.state.isConnected == false) {
+        } else {
+            return (
+                <InputToolbar
+                    {...props}
+                />
+            );
+        }
     }
 
     render() {
