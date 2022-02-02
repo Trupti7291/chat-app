@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, StyleSheet, Platform, KeyboardAvoidingView } from 'react-native';
 import { GiftedChat, Bubble, SystemMessage } from 'react-native-gifted-chat';
+import AsyncStorage from '@react-native-community/async-storage';
+
 // import firebase from 'firebase';
 // import firestore from 'firebase';
-
 const firebase = require('firebase');
 require('firebase/firestore');
 
@@ -111,7 +112,7 @@ export default class Chat extends React.Component {
         // add a new message to the collection
         this.referenceChatMessages.add({
             _id: message._id,
-            text: message.text || '',
+            text: message.text || 'how are you?',
             createdAt: message.createdAt,
             user: this.state.user,
         });
