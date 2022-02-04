@@ -4,8 +4,7 @@ import { GiftedChat, Bubble, SystemMessage, InputToolbar } from 'react-native-gi
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from '@react-native-community/netinfo';
 import MapView from 'react-native-maps';
-
-import ActionSheet from './ActionSheet';
+import CustomActions from './CustomActions';
 
 // import firebase from 'firebase';
 // import firestore from 'firebase';
@@ -213,9 +212,9 @@ export default class Chat extends React.Component {
         }
     }
 
-    renderActionSheet(props) {
-        return <ActionSheet {...props} />
-    }
+    renderCustomActions = (props) => {
+        return <CustomActions {...props} />;
+    };
 
     renderActionView(props) {
         const { currentMessage } = props;
@@ -255,7 +254,7 @@ export default class Chat extends React.Component {
                         renderBubble={this.renderBubble.bind(this)}
                         renderSystemMessage={this.renderSystemMessage}
                         renderInputToolbar={this.renderInputToolbar.bind(this)}
-                        renderActions={this.renderActionSheet}
+                        renderActions={this.renderCustomActions}
                         renderCustomView={this.renderActionView}
                         messages={this.state.messages}
                         onSend={messages => this.onSend(messages)}
