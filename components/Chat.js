@@ -19,12 +19,12 @@ export default class Chat extends React.Component {
         if (!firebase.apps.length) {
             firebase.initializeApp({
                 apiKey: "AIzaSyATwzXvTaRhh8Btvik1_emhOpOAWY8lbw8",
-                authDomain: "chat-app-c9e34.firebaseapp.com",
-                projectId: "chat-app-c9e34",
-                storageBucket: "chat-app-c9e34.appspot.com",
-                messagingSenderId: "189988602389",
-                appId: "1:189988602389:web:f796804b979bff1b07441c",
-                measurementId: "G-L9RNWLHC4W"
+                  authDomain: "chat-app-c9e34.firebaseapp.com",
+                  projectId: "chat-app-c9e34",
+                  storageBucket: "chat-app-c9e34.appspot.com",
+                  messagingSenderId: "189988602389",
+                  appId: "1:189988602389:web:f796804b979bff1b07441c",
+                  measurementId: "G-L9RNWLHC4W"
             });
         }
 
@@ -284,13 +284,13 @@ export default class Chat extends React.Component {
                         renderSystemMessage={this.renderSystemMessage}
                         renderInputToolbar={this.renderInputToolbar.bind(this)}
                         renderActions={this.renderCustomActions}
-                        renderCustomView={this.renderActionView}
+                        renderCustomView={this.renderCustomView}
                         messages={this.state.messages}
                         isConnected={this.state.isConnected}
                         onSend={messages => this.onSend(messages)}
                         user={{
                             _id: this.state.user._id,
-                            name: this.state.name,
+                            name: this.state.user.name,
                             avatar: this.state.user.avatar,
 
                         }}
