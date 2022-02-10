@@ -147,6 +147,8 @@ export default class Chat extends React.Component {
                 _id: data._id,
                 text: data.text,
                 createdAt: data.createdAt.toDate(),
+                image: data.image || null,
+                location: data.location || null,
                 user: {
                     _id: data.user._id,
                     name: data.user.name,
